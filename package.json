@@ -1,0 +1,16 @@
+{
+  "name": "grid-page",
+  "version": "1.0.0",
+  "description": "a real time grid based visualization of page faults",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csv-parse": "^5.3.6",
+    "pixi.js": "^7.1.2"
+  }
+}
