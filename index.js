@@ -26,8 +26,11 @@ const red_color = 0xfc0303;
 let readyState = false;
 
 //represents cell addresses to be utilized during operations
+const cell_map = new Map();
+//stores all data in batches
 const batches = [];
-const cell_addr = [17,24,52,220,3,3700,457,2254,1000];
+//stores translated cell adresses
+const cell_addr = [];
 let grid_1 = new Container();
 let grid_2 = new Container();
 let temp_grid = new Container();
@@ -73,22 +76,46 @@ function initializeGrids(size) {
  
      view.addChild(grid_2);
      view.addChild(temp_grid);
+     return ind;
 }
 
+//translates base adress and loads batches into cell_addr
+function loadBatches(base_adress_array) {
+    for (let i = 0; i < base_adress_array.length; i++) {
+        cell_addr.push(cell_map.get(base_adress_array[i]))
+    }
+    console.log(cell_addr);
+}
 //extracts steps from data
 let content;
 let file = document.getElementById('input')
 file.addEventListener('change', () => {
 
     const fr = new FileReader();
+   
 
     fr.readAsText(file.files[0]);
 
     fr.addEventListener('load', () => {
         content = fr.result;
         extractSteps();
+        loadBatches(batches[0]);
     })
 
+});
+
+let base_addr;
+let file2 = document.getElementById('input2')
+file2.addEventListener('change', () => {
+
+    const fr2 = new FileReader();
+
+    fr2.readAsText(file2.files[0]);
+
+    fr2.addEventListener('load', () => {
+        base_addr = fr2.result;
+        mapAdresses();
+    });
 });
 
 function extractSteps() {
@@ -102,7 +129,7 @@ function extractSteps() {
             batches[batch] = [];
         }
         if (temp[0] === 'f' ) {
-            batches[batch].push(hex(temp[1]));
+            batches[batch].push(hexToDec(temp[1]));
         }
     }
 
@@ -111,8 +138,18 @@ function extractSteps() {
     readyState = true;
 }
 
-const hex = (value) => parseInt(value, 16);
+const hexToDec = (value) => parseInt(value, 16);
 //selects target cells & highlights them
+
+function mapAdresses() {
+    let adresses = base_addr.split('\r\n');
+    for (let i = 0; i < adresses.length; i++) { 
+        cell_map.set(hexToDec(adresses[i]), i);
+    }
+
+    console.log(cell_map);
+}
+
 function selectPrimaryTargets(cells) {
     for (let i = 0; i < cells.length; i++) {
         grid_1.getChildAt(cell_addr[i]).getChildAt(0).tint = red_color;
@@ -172,7 +209,7 @@ function clearTemp() {
 }
 
 initializeView();
-initializeGrids(200);
+let ind = initializeGrids(200);
 
 //view.x = ;
 //view.y = ;
