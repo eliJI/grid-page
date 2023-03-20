@@ -1,6 +1,6 @@
 'use strict';
 import { Application, Sprite, Assets, Container, Graphics, ParticleContainer, LineStyle, DisplayObject } from './node_modules/pixi.js/dist/pixi.mjs';
-import { parse } from './node_modules/csv-parse/dist/esm/sync.js';
+
 
  
 //-----initializing application and first view-----
@@ -193,10 +193,10 @@ function generatePaths(cells) {
         let path = new Graphics();
         path.name = 'path';
         path.beginFill(0x0000000,1.0);
-        path.moveTo(grid_1.getChildAt(cells[i]).x+cell_width, grid_1.getChildAt(cells[i]).y+cell_width/2);
+        path.moveTo(grid_1.getChildAt(cells[i]).x+cell_width, grid_1.getChildAt(cells[i]).y+cell_width/4);
         path.lineStyle(1,0x00000,1.0,0.5,false);
         path.alpha = 0.5;
-        path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/2)
+        path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/4)
         view.addChild(path);
 
     }
@@ -225,8 +225,8 @@ function moveCells(cells) {
 //updates the opacity after a move is complete
 function updateOpacity(cells) {
     for (let i = 0; i < cells.length; i++) {
-        grid_1.getChildAt(cells[i]).alpha *=  2.05;
-        grid_2.getChildAt(cells[i]).alpha *=  2.05;
+        grid_1.getChildAt(cells[i]).alpha *=  2;
+        grid_2.getChildAt(cells[i]).alpha *=  2;
     }
 }
 
@@ -263,7 +263,7 @@ let ind = initializeGrids(200);
 let held = false;
 //stores mosue position at every frame
 let mPos = {x:0,y:0};
-
+/*
 view.on("mousedown", (e) => {
     held = true;
 });
@@ -307,7 +307,7 @@ window.addEventListener("keydown", (e) => {
         view.y = view.y+700
     }
 });
-
+*/
 //---------------------------------------------------
 
 //app loop
@@ -319,8 +319,8 @@ app.ticker.add((delta) => {
         if (lock === false) {
             console.log(batch_number);
             loadBatch(batches[batch_number]);
-            //clearPaths();
-            //generatePaths(cell_addr);
+            clearPaths();
+            generatePaths(cell_addr);
             duplicateCells(cell_addr);
             lock = true;
         }
@@ -330,7 +330,7 @@ app.ticker.add((delta) => {
                     moveCells(cell_addr);    
                 } else {
                     updateOpacity(cell_addr);
-                    //clearPaths();
+                    clearPaths();
                     temp_grid.removeChildren();
                     clearBatch();
                     batch_number += 1
