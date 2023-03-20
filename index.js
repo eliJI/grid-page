@@ -69,7 +69,7 @@ function initializeGrids(size) {
              grid_2.getChildAt(ind).addChild(Sprite.from("/img/whiteCell.png"));
              grid_2.getChildAt(ind).getChildAt(0).tint = secondary_color;
              grid_2.getChildAt(ind).getChildAt(0).alpha = 0.5;
-             grid_2.getChildAt(ind).position.set(i*gap+2000,j*gap);
+             grid_2.getChildAt(ind).position.set(i*gap+1500,j*gap);
              ind++;
          }  
      }
@@ -79,14 +79,20 @@ function initializeGrids(size) {
      return ind;
 }
 
-//translates base adress and loads batches into cell_addr
-function loadBatches(base_adress_array) {
+//translates base adress and loads batch into cell_addr
+function loadBatch(base_adress_array) {
     for (let i = 0; i < base_adress_array.length; i++) {
         cell_addr.push(cell_map.get(base_adress_array[i]))
     }
-    console.log(cell_addr);
+    //console.log(cell_addr);
 }
-//extracts steps from data
+
+function clearBatch(){
+    for (let i = cell_addr.length-1; i >=0; i--) {
+        cell_addr.pop();
+    }
+}
+    //extracts steps from data
 let content;
 let file = document.getElementById('input')
 file.addEventListener('change', () => {
@@ -99,7 +105,8 @@ file.addEventListener('change', () => {
     fr.addEventListener('load', () => {
         content = fr.result;
         extractSteps();
-        loadBatches(batches[0]);
+        cleanBatches();
+        //loadBatch(batches[0]);
     })
 
 });
@@ -133,9 +140,27 @@ function extractSteps() {
         }
     }
 
-    console.log('min: '+ Math.min(...vals)+' max: '+Math.max(...vals));
+    //console.log('min: '+ Math.min(...vals)+' max: '+Math.max(...vals));
     console.log(batches);
     readyState = true;
+}
+
+function cleanBatches() {
+    for (let i = 0; i < batches.length; i++) {
+        let temp = [];
+        if (batches[i].length == 1) {
+            temp.push((batches[i])[0]);
+        } else {
+            for (let j = 0; j < batches[i].length-1; j++) {
+                if ((batches[i])[j] !== (batches[i])[j+1]) {
+                temp.push((batches[i])[j]);
+                }
+            }
+        }
+
+        batches[i] = structuredClone(temp);
+    }
+    console.log(batches);
 }
 
 const hexToDec = (value) => parseInt(value, 16);
@@ -166,22 +191,33 @@ function selectSecondaryTargets(cells) {
 function generatePaths(cells) {
     for (let i = 0; i < cells.length; i++) {
         let path = new Graphics();
+        path.name = 'path';
         path.beginFill(0x0000000,1.0);
         path.moveTo(grid_1.getChildAt(cells[i]).x+cell_width, grid_1.getChildAt(cells[i]).y+cell_width/2);
         path.lineStyle(1,0x00000,1.0,0.5,false);
+        path.alpha = 0.5;
         path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/2)
         view.addChild(path);
 
     }
 }
 
+function clearPaths() {
+    
+    for (let i = 0; i < view.children.length; i++)
+    if (view.getChildAt(i).name == 'path') {
+        view.removeChildAt(i);
+    }
+
+    
+}
 //moves data from one cell to the next
 let done = false;
 function moveCells(cells) {
     //why is -1 needed here??????
     for (let i = 0; i < cells.length; i++) {
     
-        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 10;    
+        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 100;    
     }
 }
 
@@ -190,6 +226,7 @@ function moveCells(cells) {
 function updateOpacity(cells) {
     for (let i = 0; i < cells.length; i++) {
         grid_1.getChildAt(cells[i]).alpha *=  2.05;
+        grid_2.getChildAt(cells[i]).alpha *=  2.05;
     }
 }
 
@@ -264,8 +301,8 @@ window.addEventListener ("keydown", (e) => {
 
 window.addEventListener("keydown", (e) => {
     if (e.code == "KeyO"){
-        view.scale.x *=0.8;
-        view.scale.y *= 0.8;
+        view.scale.x *=0.87;
+        view.scale.y *= 0.87;
         view.x = view.x+700
         view.y = view.y+700
     }
@@ -275,11 +312,15 @@ window.addEventListener("keydown", (e) => {
 
 //app loop
 let lock = false;
+let batch_number = 0;
 app.ticker.add((delta) => {
     //iincludes moving and deleting of object, also need to update3 and pack into one mfunction
     if (readyState){
         if (lock === false) {
-            generatePaths(cell_addr);
+            console.log(batch_number);
+            loadBatch(batches[batch_number]);
+            //clearPaths();
+            //generatePaths(cell_addr);
             duplicateCells(cell_addr);
             lock = true;
         }
@@ -289,7 +330,10 @@ app.ticker.add((delta) => {
                     moveCells(cell_addr);    
                 } else {
                     updateOpacity(cell_addr);
+                    //clearPaths();
                     temp_grid.removeChildren();
+                    clearBatch();
+                    batch_number += 1
                     lock = false;
                 }
         }    
