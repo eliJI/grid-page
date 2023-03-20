@@ -217,7 +217,7 @@ function moveCells(cells) {
     //why is -1 needed here??????
     for (let i = 0; i < cells.length; i++) {
     
-        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 100;    
+        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 200;    
     }
 }
 
@@ -263,7 +263,7 @@ let ind = initializeGrids(200);
 let held = false;
 //stores mosue position at every frame
 let mPos = {x:0,y:0};
-/*
+
 view.on("mousedown", (e) => {
     held = true;
 });
@@ -307,7 +307,7 @@ window.addEventListener("keydown", (e) => {
         view.y = view.y+700
     }
 });
-*/
+
 //---------------------------------------------------
 
 //app loop
