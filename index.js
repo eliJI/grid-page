@@ -15,6 +15,9 @@ mask.beginFill(0xffffff,1.00);
 mask.drawRect(0,0,5000,5000);
 view.addChild(mask);
 //-------------------------------------------------
+//animation speed constant
+const speed_element = document.querySelector('#speed-selector');
+let speed;
 
 //cell width constant
 const cell_width = 7;
@@ -23,8 +26,10 @@ const secondary_color = 0x00B4FF;
 const red_color = 0xfc0303;
 
 //makes sure animation doesn't start before data is complete
-let readyState = false;
+let ready_state = false;
 
+const FIRST_ADRESS_DEBUG = 139806654861312;
+const LAST_ADRESS_DEBUG = 139809875431424;
 //represents cell addresses to be utilized during operations
 const cell_map = new Map();
 //stores all data in batches
@@ -141,8 +146,8 @@ function extractSteps() {
     }
 
     //console.log('min: '+ Math.min(...vals)+' max: '+Math.max(...vals));
-    console.log(batches);
-    readyState = true;
+    //console.log(batches);
+    ready_state = true;
 }
 
 function cleanBatches() {
@@ -163,9 +168,15 @@ function cleanBatches() {
     console.log(batches);
 }
 
+//normalizes batch based on a specific page size (in KB). A
+function normalizeBatch(base_array, base_size,normalized_size) {
+
+}
+
 const hexToDec = (value) => parseInt(value, 16);
 //selects target cells & highlights them
 
+//mapsadresses,converting hex to dec
 function mapAdresses() {
     let adresses = base_addr.split('\r\n');
     for (let i = 0; i < adresses.length; i++) { 
@@ -175,18 +186,7 @@ function mapAdresses() {
     console.log(cell_map);
 }
 
-function selectPrimaryTargets(cells) {
-    for (let i = 0; i < cells.length; i++) {
-        grid_1.getChildAt(cell_addr[i]).getChildAt(0).tint = red_color;
-    }
 
-}
-
-function selectSecondaryTargets(cells) {
-    for (let i = 0; i < cells.length; i++) {
-        grid_2.getChildAt(cell_addr[i]).getChildAt(0).tint = red_color;
-    }
-}
 //generates paths
 function generatePaths(cells) {
     for (let i = 0; i < cells.length; i++) {
@@ -213,11 +213,11 @@ function clearPaths() {
 }
 //moves data from one cell to the next
 let done = false;
-function moveCells(cells) {
+function moveCells(cells, speed) {
     //why is -1 needed here??????
     for (let i = 0; i < cells.length; i++) {
     
-        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 200;    
+        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - speed*2;    
     }
 }
 
@@ -251,13 +251,18 @@ let ind = initializeGrids(200);
 //view.x = ;
 //view.y = ;
 
+//-------------speed selection---------------------
+
+speed_element.addEventListener('click', e => {
+    //console.log(e.target.value);
+    speed = e.target.value;
+});
 
 
 
 
 
-
-
+/*
 //--------------mosue and keyboard zoom and pan for ddebugging---------------------
 
 let held = false;
@@ -274,7 +279,7 @@ view.on("mouseup", (e) => {
 
 view.on("mousemove", (e) => {
     if (held == true){
-    view.position.set(view.x + e.x-mPos.x,view.y + e.y-mPos.y);
+        view.position.set(view.x + e.x-mPos.x,view.y + e.y-mPos.y);
     }
                
 });
@@ -307,17 +312,18 @@ window.addEventListener("keydown", (e) => {
         view.y = view.y+700
     }
 });
-
+*/
 //---------------------------------------------------
+
 
 //app loop
 let lock = false;
 let batch_number = 0;
 app.ticker.add((delta) => {
     //iincludes moving and deleting of object, also need to update3 and pack into one mfunction
-    if (readyState){
+    if (ready_state){
         if (lock === false) {
-            console.log(batch_number);
+            //console.log(batch_number);
             loadBatch(batches[batch_number]);
             clearPaths();
             generatePaths(cell_addr);
@@ -327,7 +333,7 @@ app.ticker.add((delta) => {
         if (temp_grid.children.length != 0) {
 
             if ((temp_grid.getChildAt(0).x - grid_1.getChildAt(Number(temp_grid.getChildAt(0).name)).x > -1)){
-                    moveCells(cell_addr);    
+                    moveCells(cell_addr, speed);    
                 } else {
                     updateOpacity(cell_addr);
                     clearPaths();
