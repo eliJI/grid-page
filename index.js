@@ -17,7 +17,7 @@ view.addChild(mask);
 //-------------------------------------------------
 //animation speed constant
 const speed_element = document.querySelector('#speed-selector');
-let speed;
+let speed = 1;
 
 //cell width constant
 const cell_width = 7;
@@ -31,7 +31,9 @@ let ready_state = false;
 const FIRST_ADRESS_DEBUG = 139806654861312;
 const LAST_ADRESS_DEBUG = 139809875431424;
 //represents cell addresses to be utilized during operations
-const cell_map = new Map();
+const cell_map_base = new Map();
+let cell_map = new Map();
+cell_map = cell_map_base;
 //stores all data in batches
 const batches = [];
 //stores translated cell adresses
@@ -53,6 +55,7 @@ function initializeView(){
 function initializeGrids(size) {
     let gap = 7;
     let ind = 0;
+    let offset = size*7+10
     for (let j = 0; j < size; j++){
        for (let i = 0; i < size; i++) {
             grid_1.addChild(new Container());
@@ -74,7 +77,7 @@ function initializeGrids(size) {
              grid_2.getChildAt(ind).addChild(Sprite.from("/img/whiteCell.png"));
              grid_2.getChildAt(ind).getChildAt(0).tint = secondary_color;
              grid_2.getChildAt(ind).getChildAt(0).alpha = 0.5;
-             grid_2.getChildAt(ind).position.set(i*gap+1500,j*gap);
+             grid_2.getChildAt(ind).position.set(i*gap+offset,j*gap);
              ind++;
          }  
      }
@@ -147,7 +150,6 @@ function extractSteps() {
 
     //console.log('min: '+ Math.min(...vals)+' max: '+Math.max(...vals));
     //console.log(batches);
-    ready_state = true;
 }
 
 function cleanBatches() {
@@ -168,9 +170,23 @@ function cleanBatches() {
     console.log(batches);
 }
 
-//normalizes batch based on a specific page size (in KB). A
-function normalizeBatch(base_array, base_size,normalized_size) {
+//normalizes batch based on a specific page size (in KB). thisversion treats only accessed pages as the entire virtual memory, ignoring pages that weren't accessed
+function normalizeBatches(base_page_size, normalized_page_size) {
+    let pages_per_batch = normalized_page_size/base_page_size;
+    console.log("pages per batch ", pages_per_batch);
+    let normalized_map = new Map();
 
+    let new_page_number = -1;
+    cell_map_base.forEach((value, key) => {
+        //console.log(key," ",value);
+        if (value % pages_per_batch == 0) {
+        new_page_number+= 1;
+        }
+        normalized_map.set(key, new_page_number)
+
+    });
+    cell_map = structuredClone(normalized_map);
+    console.log(normalized_map);
 }
 
 const hexToDec = (value) => parseInt(value, 16);
@@ -180,12 +196,11 @@ const hexToDec = (value) => parseInt(value, 16);
 function mapAdresses() {
     let adresses = base_addr.split('\r\n');
     for (let i = 0; i < adresses.length; i++) { 
-        cell_map.set(hexToDec(adresses[i]), i);
+        cell_map_base.set(hexToDec(adresses[i]), i);
     }
 
     console.log(cell_map);
 }
-
 
 //generates paths
 function generatePaths(cells) {
@@ -203,7 +218,6 @@ function generatePaths(cells) {
 }
 
 function clearPaths() {
-    
     for (let i = 0; i < view.children.length; i++)
     if (view.getChildAt(i).name == 'path') {
         view.removeChildAt(i);
@@ -212,12 +226,11 @@ function clearPaths() {
     
 }
 //moves data from one cell to the next
-let done = false;
 function moveCells(cells, speed) {
     //why is -1 needed here??????
     for (let i = 0; i < cells.length; i++) {
     
-        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - speed*2;    
+        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 1*speed;    
     }
 }
 
@@ -245,8 +258,17 @@ function clearTemp() {
     temp_grid.removeChildren();
 }
 
-initializeView();
-let ind = initializeGrids(200);
+//start button begins initialization
+document.querySelector("#start").addEventListener('click', (e) => {
+    normalizeBatches(4,4);
+    initializeView();
+    let i = Array.from(cell_map.values()).pop();
+    //let iprime = Math.ceil(Math.sqrt(i))
+    //console.log(iprime);
+    initializeGrids(Math.ceil(Math.sqrt(i)));
+    ready_state = true;
+});
+
 
 //view.x = ;
 //view.y = ;
@@ -262,7 +284,7 @@ speed_element.addEventListener('click', e => {
 
 
 
-/*
+
 //--------------mosue and keyboard zoom and pan for ddebugging---------------------
 
 let held = false;
@@ -312,24 +334,29 @@ window.addEventListener("keydown", (e) => {
         view.y = view.y+700
     }
 });
-*/
+
 //---------------------------------------------------
 
 
 //app loop
 let lock = false;
 let batch_number = 0;
+
 app.ticker.add((delta) => {
     //iincludes moving and deleting of object, also need to update3 and pack into one mfunction
     if (ready_state){
         if (lock === false) {
             //console.log(batch_number);
+        
             loadBatch(batches[batch_number]);
             clearPaths();
+            
+            console.log(cell_addr);
             generatePaths(cell_addr);
             duplicateCells(cell_addr);
             lock = true;
         }
+        
         if (temp_grid.children.length != 0) {
 
             if ((temp_grid.getChildAt(0).x - grid_1.getChildAt(Number(temp_grid.getChildAt(0).name)).x > -1)){
@@ -342,7 +369,8 @@ app.ticker.add((delta) => {
                     batch_number += 1
                     lock = false;
                 }
-        }    
+        }
+          
     }
    
     
