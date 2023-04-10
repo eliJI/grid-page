@@ -37,7 +37,7 @@ cell_map = cell_map_base;
 //stores all data in batches
 const batches = [];
 //stores translated cell adresses
-const cell_addr = [];
+let cell_addr = [];
 let grid_1 = new Container();
 let grid_2 = new Container();
 let temp_grid = new Container();
@@ -160,7 +160,7 @@ function cleanBatches() {
         } else {
             for (let j = 0; j < batches[i].length-1; j++) {
                 if ((batches[i])[j] !== (batches[i])[j+1]) {
-                temp.push((batches[i])[j]);
+                    temp.push((batches[i])[j]);
                 }
             }
         }
@@ -170,6 +170,21 @@ function cleanBatches() {
     console.log(batches);
 }
 
+//cleans adresses before animation 
+function cleanAdresses() {
+    let temp = []
+    if (cell_addr.length == 1) {
+        temp.push(cell_addr[0]);
+    } else {
+        for (let i = 0; i < cell_addr.length-1; i++) {
+            if (cell_addr[i] !== cell_addr[i-1]) {
+                temp.push(cell_addr[i]);
+            }
+        }
+    }
+
+    cell_addr = structuredClone(temp);
+}
 //normalizes batch based on a specific page size (in KB). thisversion treats only accessed pages as the entire virtual memory, ignoring pages that weren't accessed
 function normalizeBatches(base_page_size, normalized_page_size) {
     let pages_per_batch = normalized_page_size/base_page_size;
@@ -191,6 +206,7 @@ function normalizeBatches(base_page_size, normalized_page_size) {
 
 const hexToDec = (value) => parseInt(value, 16);
 //selects target cells & highlights them
+
 
 //mapsadresses,converting hex to dec
 function mapAdresses() {
@@ -329,10 +345,10 @@ window.addEventListener ("keydown", (e) => {
 
 window.addEventListener("keydown", (e) => {
     if (e.code == "KeyO"){
-        view.scale.x *=0.87;
+        view.scale.x *= 0.87;
         view.scale.y *= 0.87;
-        view.x = view.x+700
-        view.y = view.y+700
+        view.x = view.x + 700
+        view.y = view.y + 700
     }
 });
 
@@ -348,10 +364,10 @@ app.ticker.add((delta) => {
     if (ready_state){
         if (lock === false) {
             //console.log(batch_number);
-        
+            
             loadBatch(batches[batch_number]);
             clearPaths();
-            
+            cleanAdresses();
             console.log(cell_addr);
             generatePaths(cell_addr);
             duplicateCells(cell_addr);
