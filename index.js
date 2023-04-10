@@ -260,13 +260,14 @@ function clearTemp() {
 
 //start button begins initialization
 document.querySelector("#start").addEventListener('click', (e) => {
-    normalizeBatches(4,4);
+    normalizeBatches(4,2048);
     initializeView();
     let i = Array.from(cell_map.values()).pop();
     //let iprime = Math.ceil(Math.sqrt(i))
     //console.log(iprime);
     initializeGrids(Math.ceil(Math.sqrt(i)));
     ready_state = true;
+    console.log(batches);
 });
 
 
