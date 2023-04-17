@@ -100,91 +100,30 @@ function clearBatch(){
         cell_addr.pop();
     }
 }
-    //extracts steps from data
-let content;
-let file = document.getElementById('input')
-file.addEventListener('change', () => {
 
-    const fr = new FileReader();
-   
+async function loadBatches() {
 
-    fr.readAsText(file.files[0]);
-
-    fr.addEventListener('load', () => {
-        content = fr.result;
-        extractSteps();
-        cleanBatches();
-        //loadBatch(batches[0]);
+    const response = await fetch('./batches.json')
+    const jsonData = await response.json();
+    jsonData.forEach(fault => {
+        batches.push(fault)
     })
-
-});
-
-let base_addr;
-let file2 = document.getElementById('input2')
-file2.addEventListener('change', () => {
-
-    const fr2 = new FileReader();
-
-    fr2.readAsText(file2.files[0]);
-
-    fr2.addEventListener('load', () => {
-        base_addr = fr2.result;
-        mapAdresses();
-    });
-});
-
-function extractSteps() {
-    let vals = [];
-    let batch = -1;
-    let lines = content.split('\n');
+    /*
+    console.log("-----results of loadBatches-----")
+    console.log(batches)
+    console.log("-------------------------------")
+    */
+}
+async function loadCellmap() {
+    const response = await fetch('./unique.txt');
+    const textData = await response.text()
+    const lines = textData.split('\n');
     for (let i = 0; i < lines.length; i++) {
-        let temp = lines[i].split(',');
-        if (temp[0] === 's' ) {
-            batch += 1;
-            batches[batch] = [];
-        }
-        if (temp[0] === 'f' ) {
-            batches[batch].push(hexToDec(temp[1]));
-        }
+        console.log(lines[i].hexEncode());
+        //cell_map_base.set(hexToDec(lines));
     }
-
-    //console.log('min: '+ Math.min(...vals)+' max: '+Math.max(...vals));
-    //console.log(batches);
 }
 
-function cleanBatches() {
-    for (let i = 0; i < batches.length; i++) {
-        let temp = [];
-        if (batches[i].length == 1) {
-            temp.push((batches[i])[0]);
-        } else {
-            for (let j = 0; j < batches[i].length-1; j++) {
-                if ((batches[i])[j] !== (batches[i])[j+1]) {
-                    temp.push((batches[i])[j]);
-                }
-            }
-        }
-
-        batches[i] = structuredClone(temp);
-    }
-    console.log(batches);
-}
-
-//cleans adresses before animation 
-function cleanAdresses() {
-    let temp = []
-    if (cell_addr.length == 1) {
-        temp.push(cell_addr[0]);
-    } else {
-        for (let i = 0; i < cell_addr.length-1; i++) {
-            if (cell_addr[i] !== cell_addr[i-1]) {
-                temp.push(cell_addr[i]);
-            }
-        }
-    }
-
-    cell_addr = structuredClone(temp);
-}
 //normalizes batch based on a specific page size (in KB). thisversion treats only accessed pages as the entire virtual memory, ignoring pages that weren't accessed
 function normalizeBatches(base_page_size, normalized_page_size) {
     let pages_per_batch = normalized_page_size/base_page_size;
@@ -201,7 +140,9 @@ function normalizeBatches(base_page_size, normalized_page_size) {
 
     });
     cell_map = structuredClone(normalized_map);
+    console.log("-----normalized map-----")
     console.log(normalized_map);
+    console.log("-------------------------------")
 }
 
 const hexToDec = (value) => parseInt(value, 16);
@@ -216,6 +157,18 @@ function mapAdresses() {
     }
 
     console.log(cell_map);
+}
+
+String.prototype.hexEncode = function(){
+    var hex, i;
+
+    var result = "";
+    for (i=0; i<this.length; i++) {
+        hex = this.charCodeAt(i).toString(16);
+        result += ("000"+hex).slice(-4);
+    }
+
+    return result
 }
 
 //generates paths
@@ -276,6 +229,10 @@ function clearTemp() {
 
 //start button begins initialization
 document.querySelector("#start").addEventListener('click', (e) => {
+
+    loadBatches();
+    loadCellmap();
+    //----post population from data files----
     normalizeBatches(4,2048);
     initializeView();
     let i = Array.from(cell_map.values()).pop();
@@ -283,7 +240,6 @@ document.querySelector("#start").addEventListener('click', (e) => {
     //console.log(iprime);
     initializeGrids(Math.ceil(Math.sqrt(i)));
     ready_state = true;
-    console.log(batches);
 });
 
 
