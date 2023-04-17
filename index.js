@@ -90,9 +90,10 @@ function initializeGrids(size) {
 //translates base adress and loads batch into cell_addr
 function loadBatch(base_adress_array) {
     for (let i = 0; i < base_adress_array.length; i++) {
-        cell_addr.push(cell_map.get(base_adress_array[i]))
+        cell_addr.push(cell_map.get(base_adress_array[i].Address))
     }
-    //console.log(cell_addr);
+    console.log("cell_asdtr priont")
+    console.log(cell_addr);
 }
 
 function clearBatch(){
@@ -105,23 +106,42 @@ async function loadBatches() {
 
     const response = await fetch('./batches.json')
     const jsonData = await response.json();
+    
+    let temp_array = [];
     jsonData.forEach(fault => {
-        batches.push(fault)
+        //console.log(fault.FaultType)
+        if (fault.Address == -1) {
+            if (temp_array.length > 0 ){
+                batches.push(temp_array)
+                temp_array = []    
+            }
+        } else {
+            if (fault.FaultType !== "b") {
+              temp_array.push(fault)  
+            }
+        }
+        
     })
-    /*
+    batches.push(temp_array);
+    
     console.log("-----results of loadBatches-----")
     console.log(batches)
     console.log("-------------------------------")
-    */
+    
 }
 async function loadCellmap() {
     const response = await fetch('./unique.txt');
     const textData = await response.text()
     const lines = textData.split('\n');
+
+    
     for (let i = 0; i < lines.length; i++) {
-        console.log(lines[i].hexEncode());
-        //cell_map_base.set(hexToDec(lines));
+        cell_map_base.set(parseInt(lines[i], 10), i)
     }
+    console.log("-----results of loadCellMap-----")
+    console.log(cell_map_base)
+    cell_map = structuredClone(cell_map_base)
+    console.log("-------------------------------")
 }
 
 //normalizes batch based on a specific page size (in KB). thisversion treats only accessed pages as the entire virtual memory, ignoring pages that weren't accessed
@@ -227,19 +247,27 @@ function clearTemp() {
     temp_grid.removeChildren();
 }
 
+
 //start button begins initialization
-document.querySelector("#start").addEventListener('click', (e) => {
+document.querySelector("#load").addEventListener('click', (e) => {
 
     loadBatches();
     loadCellmap();
+ 
+});
+document.querySelector("#start").addEventListener('click', (e) => {
     //----post population from data files----
     normalizeBatches(4,2048);
     initializeView();
     let i = Array.from(cell_map.values()).pop();
+    console.log("ivalue: ",i)
     //let iprime = Math.ceil(Math.sqrt(i))
     //console.log(iprime);
     initializeGrids(Math.ceil(Math.sqrt(i)));
-    ready_state = true;
+    
+
+   ready_state = true
+ 
 });
 
 
@@ -319,11 +347,10 @@ app.ticker.add((delta) => {
     //iincludes moving and deleting of object, also need to update3 and pack into one mfunction
     if (ready_state){
         if (lock === false) {
-            //console.log(batch_number);
-            
+            console.log(batch_number);
+            console.log(batches[0]);
             loadBatch(batches[batch_number]);
             clearPaths();
-            cleanAdresses();
             console.log(cell_addr);
             generatePaths(cell_addr);
             duplicateCells(cell_addr);
