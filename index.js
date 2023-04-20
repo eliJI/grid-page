@@ -90,10 +90,15 @@ function initializeGrids(size) {
 //translates base adress and loads batch into cell_addr
 function loadBatch(base_adress_array) {
     for (let i = 0; i < base_adress_array.length; i++) {
-        cell_addr.push(cell_map.get(base_adress_array[i].Address))
+        if (base_adress_array[i].FaultType === "e") {
+            cell_addr.push(-1*(cell_map.get(base_adress_array[i].Address)))
+        } else {
+            cell_addr.push(cell_map.get(base_adress_array[i].Address))
+        }
+       
     }
-    console.log("cell_asdtr priont")
-    console.log(cell_addr);
+    //console.log("cell_asdtr priont")
+    //console.log(cell_addr);
 }
 
 function clearBatch(){
@@ -134,9 +139,12 @@ async function loadCellmap() {
     const textData = await response.text()
     const lines = textData.split('\n');
 
-    
+    let j = 0;
     for (let i = 0; i < lines.length; i++) {
-        cell_map_base.set(parseInt(lines[i], 10), i)
+        if (cell_map_base.has(parseInt(lines[i], 10)) !== true) {
+            cell_map_base.set(parseInt(lines[i], 10), j);
+            j++;
+        }
     }
     console.log("-----results of loadCellMap-----")
     console.log(cell_map_base)
@@ -194,15 +202,16 @@ String.prototype.hexEncode = function(){
 //generates paths
 function generatePaths(cells) {
     for (let i = 0; i < cells.length; i++) {
-        let path = new Graphics();
-        path.name = 'path';
-        path.beginFill(0x0000000,1.0);
-        path.moveTo(grid_1.getChildAt(cells[i]).x+cell_width, grid_1.getChildAt(cells[i]).y+cell_width/4);
-        path.lineStyle(1,0x00000,1.0,0.5,false);
-        path.alpha = 0.5;
-        path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/4)
-        view.addChild(path);
-
+        if (cells[i > 0]) {
+            let path = new Graphics();
+            path.name = 'path';
+            path.beginFill(0x0000000,1.0);
+            path.moveTo(grid_1.getChildAt(cells[i]).x+cell_width, grid_1.getChildAt(cells[i]).y+cell_width/4);
+            path.lineStyle(1,0x00000,1.0,0.5,false);
+            path.alpha = 0.5;
+            path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/4)
+            view.addChild(path);    
+        }
     }
 }
 
@@ -218,8 +227,12 @@ function clearPaths() {
 function moveCells(cells, speed) {
     //why is -1 needed here??????
     for (let i = 0; i < cells.length; i++) {
-    
-        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 1*speed;    
+        if (SOME CONDTION TO TELL IF ITS F) {
+            temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 1*speed;      
+        } else {
+
+        }
+          
     }
 }
 
@@ -227,19 +240,27 @@ function moveCells(cells, speed) {
 //updates the opacity after a move is complete
 function updateOpacity(cells) {
     for (let i = 0; i < cells.length; i++) {
+        if (SOME CONDIION TO TELL IF ITS F) {
+
         grid_1.getChildAt(cells[i]).alpha *=  2;
         grid_2.getChildAt(cells[i]).alpha *=  2;
+        } else {
+            console.log("NEGATIVE")
+            grid_1.getChildAt(Math.abs(cells[i])).tint = 0x42f563
+        }
     }
 }
 
 
 function duplicateCells(cells) {
     for (let i = 0; i < cells.length; i++) {
-        temp_grid.addChild(new Container());
-        temp_grid.getChildAt(i).name = (grid_2.getChildAt(cells[i])).name;
-        temp_grid.getChildAt(i).addChild(Sprite.from("/img/whiteCell.png"));
-        temp_grid.getChildAt(i).getChildAt(0).tint = red_color;
-        temp_grid.getChildAt(i).position.set(grid_2.getChildAt(cells[i]).x,grid_2.getChildAt(cells[i]).y);    
+        if (SOME CONDITION TO TELL IF ITS F) {
+            temp_grid.addChild(new Container());
+            temp_grid.getChildAt(i).name = (grid_2.getChildAt(cells[i])).name;
+            temp_grid.getChildAt(i).addChild(Sprite.from("/img/whiteCell.png"));
+            temp_grid.getChildAt(i).getChildAt(0).tint = red_color;
+            temp_grid.getChildAt(i).position.set(grid_2.getChildAt(cells[i]).x,grid_2.getChildAt(cells[i]).y);        
+        }
     }    
 }
 
@@ -347,11 +368,11 @@ app.ticker.add((delta) => {
     //iincludes moving and deleting of object, also need to update3 and pack into one mfunction
     if (ready_state){
         if (lock === false) {
-            console.log(batch_number);
-            console.log(batches[0]);
+            //console.log(batch_number);
+            //console.log(batches[0]);
             loadBatch(batches[batch_number]);
             clearPaths();
-            console.log(cell_addr);
+            //console.log(cell_addr);
             generatePaths(cell_addr);
             duplicateCells(cell_addr);
             lock = true;
