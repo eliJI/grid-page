@@ -257,7 +257,7 @@ document.querySelector("#load").addEventListener('click', (e) => {
 });
 document.querySelector("#start").addEventListener('click', (e) => {
     //----post population from data files----
-    normalizeBatches(4,2048);
+    normalizeBatches(4,8);
     initializeView();
     let i = Array.from(cell_map.values()).pop();
     console.log("ivalue: ",i)
