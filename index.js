@@ -227,11 +227,9 @@ function clearPaths() {
 function moveCells(cells, speed) {
     //why is -1 needed here??????
     for (let i = 0; i < cells.length; i++) {
-        if (SOME CONDTION TO TELL IF ITS F) {
+       
             temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 1*speed;      
-        } else {
-
-        }
+        
           
     }
 }
@@ -240,27 +238,27 @@ function moveCells(cells, speed) {
 //updates the opacity after a move is complete
 function updateOpacity(cells) {
     for (let i = 0; i < cells.length; i++) {
-        if (SOME CONDIION TO TELL IF ITS F) {
+      
 
         grid_1.getChildAt(cells[i]).alpha *=  2;
         grid_2.getChildAt(cells[i]).alpha *=  2;
-        } else {
+      
             console.log("NEGATIVE")
             grid_1.getChildAt(Math.abs(cells[i])).tint = 0x42f563
-        }
+        
     }
 }
 
 
 function duplicateCells(cells) {
     for (let i = 0; i < cells.length; i++) {
-        if (SOME CONDITION TO TELL IF ITS F) {
+        
             temp_grid.addChild(new Container());
             temp_grid.getChildAt(i).name = (grid_2.getChildAt(cells[i])).name;
             temp_grid.getChildAt(i).addChild(Sprite.from("/img/whiteCell.png"));
             temp_grid.getChildAt(i).getChildAt(0).tint = red_color;
             temp_grid.getChildAt(i).position.set(grid_2.getChildAt(cells[i]).x,grid_2.getChildAt(cells[i]).y);        
-        }
+        
     }    
 }
 
