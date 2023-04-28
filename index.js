@@ -202,7 +202,7 @@ String.prototype.hexEncode = function(){
 //generates paths
 function generatePaths(cells) {
     for (let i = 0; i < cells.length; i++) {
-        if (cells[i > 0]) {
+       
             let path = new Graphics();
             path.name = 'path';
             path.beginFill(0x0000000,1.0);
@@ -211,7 +211,7 @@ function generatePaths(cells) {
             path.alpha = 0.5;
             path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/4)
             view.addChild(path);    
-        }
+        
     }
 }
 
