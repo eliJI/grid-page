@@ -90,8 +90,14 @@ function initializeGrids(size) {
 //translates base adress and loads batch into cell_addr
 function loadBatch(base_adress_array) {
     for (let i = 0; i < base_adress_array.length; i++) {
-        cell_addr.push(cell_map.get(base_adress_array[i]))
+        if (base_adress_array[i].FaultType === "e") {
+            cell_addr.push(-1*(cell_map.get(base_adress_array[i].Address)))
+        } else {
+            cell_addr.push(cell_map.get(base_adress_array[i].Address))
+        }
+       
     }
+    //console.log("cell_asdtr priont")
     //console.log(cell_addr);
 }
 
@@ -100,91 +106,52 @@ function clearBatch(){
         cell_addr.pop();
     }
 }
-    //extracts steps from data
-let content;
-let file = document.getElementById('input')
-file.addEventListener('change', () => {
 
-    const fr = new FileReader();
-   
+async function loadBatches() {
 
-    fr.readAsText(file.files[0]);
-
-    fr.addEventListener('load', () => {
-        content = fr.result;
-        extractSteps();
-        cleanBatches();
-        //loadBatch(batches[0]);
-    })
-
-});
-
-let base_addr;
-let file2 = document.getElementById('input2')
-file2.addEventListener('change', () => {
-
-    const fr2 = new FileReader();
-
-    fr2.readAsText(file2.files[0]);
-
-    fr2.addEventListener('load', () => {
-        base_addr = fr2.result;
-        mapAdresses();
-    });
-});
-
-function extractSteps() {
-    let vals = [];
-    let batch = -1;
-    let lines = content.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-        let temp = lines[i].split(',');
-        if (temp[0] === 's' ) {
-            batch += 1;
-            batches[batch] = [];
-        }
-        if (temp[0] === 'f' ) {
-            batches[batch].push(hexToDec(temp[1]));
-        }
-    }
-
-    //console.log('min: '+ Math.min(...vals)+' max: '+Math.max(...vals));
-    //console.log(batches);
-}
-
-function cleanBatches() {
-    for (let i = 0; i < batches.length; i++) {
-        let temp = [];
-        if (batches[i].length == 1) {
-            temp.push((batches[i])[0]);
+    const response = await fetch('./batches.json')
+    const jsonData = await response.json();
+    
+    let temp_array = [];
+    jsonData.forEach(fault => {
+        //console.log(fault.FaultType)
+        if (fault.Address == -1) {
+            if (temp_array.length > 0 ){
+                batches.push(temp_array)
+                temp_array = []    
+            }
         } else {
-            for (let j = 0; j < batches[i].length-1; j++) {
-                if ((batches[i])[j] !== (batches[i])[j+1]) {
-                    temp.push((batches[i])[j]);
-                }
+            if (fault.FaultType !== "b") {
+              temp_array.push(fault)  
             }
         }
-
-        batches[i] = structuredClone(temp);
-    }
-    console.log(batches);
+        
+    })
+    batches.push(temp_array);
+    
+    console.log("-----results of loadBatches-----")
+    console.log(batches)
+    console.log("-------------------------------")
+    
 }
+async function loadCellmap() {
+    const response = await fetch('./unique.txt');
+    const textData = await response.text()
+    const lines = textData.split('\n');
 
-//cleans adresses before animation 
-function cleanAdresses() {
-    let temp = []
-    if (cell_addr.length == 1) {
-        temp.push(cell_addr[0]);
-    } else {
-        for (let i = 0; i < cell_addr.length-1; i++) {
-            if (cell_addr[i] !== cell_addr[i-1]) {
-                temp.push(cell_addr[i]);
-            }
+    let j = 0;
+    for (let i = 0; i < lines.length; i++) {
+        if (cell_map_base.has(parseInt(lines[i], 10)) !== true) {
+            cell_map_base.set(parseInt(lines[i], 10), j);
+            j++;
         }
     }
-
-    cell_addr = structuredClone(temp);
+    console.log("-----results of loadCellMap-----")
+    console.log(cell_map_base)
+    cell_map = structuredClone(cell_map_base)
+    console.log("-------------------------------")
 }
+
 //normalizes batch based on a specific page size (in KB). thisversion treats only accessed pages as the entire virtual memory, ignoring pages that weren't accessed
 function normalizeBatches(base_page_size, normalized_page_size) {
     let pages_per_batch = normalized_page_size/base_page_size;
@@ -201,7 +168,9 @@ function normalizeBatches(base_page_size, normalized_page_size) {
 
     });
     cell_map = structuredClone(normalized_map);
+    console.log("-----normalized map-----")
     console.log(normalized_map);
+    console.log("-------------------------------")
 }
 
 const hexToDec = (value) => parseInt(value, 16);
@@ -218,18 +187,31 @@ function mapAdresses() {
     console.log(cell_map);
 }
 
+String.prototype.hexEncode = function(){
+    var hex, i;
+
+    var result = "";
+    for (i=0; i<this.length; i++) {
+        hex = this.charCodeAt(i).toString(16);
+        result += ("000"+hex).slice(-4);
+    }
+
+    return result
+}
+
 //generates paths
 function generatePaths(cells) {
     for (let i = 0; i < cells.length; i++) {
-        let path = new Graphics();
-        path.name = 'path';
-        path.beginFill(0x0000000,1.0);
-        path.moveTo(grid_1.getChildAt(cells[i]).x+cell_width, grid_1.getChildAt(cells[i]).y+cell_width/4);
-        path.lineStyle(1,0x00000,1.0,0.5,false);
-        path.alpha = 0.5;
-        path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/4)
-        view.addChild(path);
-
+       
+            let path = new Graphics();
+            path.name = 'path';
+            path.beginFill(0x0000000,1.0);
+            path.moveTo(grid_1.getChildAt(cells[i]).x+cell_width, grid_1.getChildAt(cells[i]).y+cell_width/4);
+            path.lineStyle(1,0x00000,1.0,0.5,false);
+            path.alpha = 0.5;
+            path.lineTo(grid_2.getChildAt(cells[i]).x, grid_2.getChildAt(cells[i]).y+cell_width/4)
+            view.addChild(path);    
+        
     }
 }
 
@@ -245,8 +227,10 @@ function clearPaths() {
 function moveCells(cells, speed) {
     //why is -1 needed here??????
     for (let i = 0; i < cells.length; i++) {
-    
-        temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 1*speed;    
+       
+            temp_grid.getChildAt(i).x = temp_grid.getChildAt(i).x - 1*speed;      
+        
+          
     }
 }
 
@@ -254,19 +238,27 @@ function moveCells(cells, speed) {
 //updates the opacity after a move is complete
 function updateOpacity(cells) {
     for (let i = 0; i < cells.length; i++) {
+      
+
         grid_1.getChildAt(cells[i]).alpha *=  2;
         grid_2.getChildAt(cells[i]).alpha *=  2;
+      
+            console.log("NEGATIVE")
+            grid_1.getChildAt(Math.abs(cells[i])).tint = 0x42f563
+        
     }
 }
 
 
 function duplicateCells(cells) {
     for (let i = 0; i < cells.length; i++) {
-        temp_grid.addChild(new Container());
-        temp_grid.getChildAt(i).name = (grid_2.getChildAt(cells[i])).name;
-        temp_grid.getChildAt(i).addChild(Sprite.from("/img/whiteCell.png"));
-        temp_grid.getChildAt(i).getChildAt(0).tint = red_color;
-        temp_grid.getChildAt(i).position.set(grid_2.getChildAt(cells[i]).x,grid_2.getChildAt(cells[i]).y);    
+        
+            temp_grid.addChild(new Container());
+            temp_grid.getChildAt(i).name = (grid_2.getChildAt(cells[i])).name;
+            temp_grid.getChildAt(i).addChild(Sprite.from("/img/whiteCell.png"));
+            temp_grid.getChildAt(i).getChildAt(0).tint = red_color;
+            temp_grid.getChildAt(i).position.set(grid_2.getChildAt(cells[i]).x,grid_2.getChildAt(cells[i]).y);        
+        
     }    
 }
 
@@ -274,16 +266,27 @@ function clearTemp() {
     temp_grid.removeChildren();
 }
 
+
 //start button begins initialization
+document.querySelector("#load").addEventListener('click', (e) => {
+
+    loadBatches();
+    loadCellmap();
+ 
+});
 document.querySelector("#start").addEventListener('click', (e) => {
-    normalizeBatches(4,2048);
+    //----post population from data files----
+    normalizeBatches(4,8);
     initializeView();
     let i = Array.from(cell_map.values()).pop();
+    console.log("ivalue: ",i)
     //let iprime = Math.ceil(Math.sqrt(i))
     //console.log(iprime);
     initializeGrids(Math.ceil(Math.sqrt(i)));
-    ready_state = true;
-    console.log(batches);
+    
+
+   ready_state = true
+ 
 });
 
 
@@ -364,11 +367,10 @@ app.ticker.add((delta) => {
     if (ready_state){
         if (lock === false) {
             //console.log(batch_number);
-            
+            //console.log(batches[0]);
             loadBatch(batches[batch_number]);
             clearPaths();
-            cleanAdresses();
-            console.log(cell_addr);
+            //console.log(cell_addr);
             generatePaths(cell_addr);
             duplicateCells(cell_addr);
             lock = true;
